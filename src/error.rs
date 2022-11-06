@@ -17,6 +17,7 @@ pub enum Error {
     Immutable(String),
     AlreadyDefined(String),
     NotDefined(String),
+    TooFewArgs(usize, usize),
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -36,6 +37,7 @@ impl std::fmt::Display for Error {
             Self::Immutable(s) => write!(f, "ERROR: {s} is immutable"),
             Self::AlreadyDefined(s) => write!(f, "ERROR: {s} is already defined"),
             Self::NotDefined(s) => write!(f, "ERROR: {s} is not defined"),
+            Self::TooFewArgs(expect, recved) => write!(f, "ERROR: expected length of {expect} for the arguments, got length of {recved}"),
         }
     }
 }

@@ -6,7 +6,7 @@ use crate::parser::*;
 use crate::value::*;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Scope {
     vars: HashMap<String, Value>
 }
@@ -23,12 +23,17 @@ impl Scope {
 #[derive(Debug)]
 pub struct Context {
     scopes: Vec<Scope>,
+    consts: Vec<Scope>,
     global: Scope,
 }
 impl Context {
-    pub fn new() -> Self { Self { scopes: vec![Scope::new()], global: Scope::new() } }
+    pub fn new() -> Self { Self { scopes: vec![Scope::new()], consts: vec![Scope::new()], global: Scope::new() } }
     pub fn get(&self, id: &String) -> Option<&Value> {
         for scope in self.scopes.iter().rev() {
+            let v = scope.get(id);
+            if v.is_some() { return v }
+        }
+        for scope in self.consts.iter().rev() {
             let v = scope.get(id);
             if v.is_some() { return v }
         }
@@ -36,6 +41,9 @@ impl Context {
     }
     pub fn set(&mut self, id: &String, value: &Value) -> Result<(), ()> {
         if self.global.get(id).is_some() { return Err(()) }
+        for scope in self.consts.iter() {
+            if scope.get(id).is_some() { return Err(()) }
+        }
         for scope in self.scopes.iter_mut() {
             if scope.get(id).is_some() {
                 let v = scope.set(id, value);
@@ -45,12 +53,24 @@ impl Context {
         self.scopes.last_mut().unwrap().set(id, value);
         Ok(())
     }
-    pub fn def(&mut self, id: &String, value: &Value) -> Result<(), ()> {
+    pub fn set_const(&mut self, id: &String, value: &Value) -> Result<(), ()> {
         if self.global.get(id).is_some() { return Err(()) }
+        for scope in self.consts.iter() {
+            if scope.get(id).is_some() { return Err(()) }
+        }
         for scope in self.scopes.iter() {
-            if scope.get(id).is_some() {
-                return Err(())
-            }
+            if scope.get(id).is_some() { return Err(()) }
+        }
+        self.consts.last_mut().unwrap().set(id, value);
+        Ok(())
+    }
+    pub fn global(&mut self, id: &String, value: &Value) -> Result<(), ()> {
+        if self.global.get(id).is_some() { return Err(()) }
+        for scope in self.consts.iter() {
+            if scope.get(id).is_some() { return Err(()) }
+        }
+        for scope in self.scopes.iter() {
+            if scope.get(id).is_some() { return Err(()) }
         }
         self.global.set(id, value);
         Ok(())
@@ -109,7 +129,23 @@ pub fn get(node: &Node, context: &mut Context, path: &str) -> Result<Value, Erro
             if value.is_none() { return Err(Error::IllegalUnaryOperation(op.clone(), v)) }
             Ok(value.unwrap())
         }
-        Node::Call { v, args, pos } => Err(Error::Todo(format!("call"))),
+        Node::Call { v, args, pos } => {
+            let func = get(v, context, path)?;
+            if let Value::Function(params, body) = func {
+                let global = context.global.clone();
+                let mut fcontext = Context::new(); fcontext.global = global;
+                for i in 0..params.len() {
+                    if let Some(n) = args.get(i) {
+                        let value = get(n, context, path)?;
+                        fcontext.set(&params[i], &value);
+                    } else {
+                        return Err(Error::TooFewArgs(params.len(), args.len()))
+                    }
+                }
+                return get(&body, &mut fcontext, path)
+            }
+            Err(Error::ExpectedType(Type::Function))
+        }
         Node::Tuple { nodes, pos } => {
             let mut values: Vec<Value> = vec![];
             for n in nodes.iter() {
@@ -118,6 +154,22 @@ pub fn get(node: &Node, context: &mut Context, path: &str) -> Result<Value, Erro
             }
             Ok(Value::Tuple(values))
         }
+        Node::Function { id, body, pos } => {
+            if let Node::Word { v, pos } = id.as_ref() {
+                return Ok(Value::Function(vec![v.clone()], body.as_ref().clone()))
+            } else if let Node::Tuple { nodes, pos } = id.as_ref() {
+                let mut params: Vec<String> = vec![];
+                for n in nodes.iter() {
+                    if let Node::Word { v, pos } = n {
+                        params.push(v.clone());
+                    } else {
+                        return Err(Error::UnexpectedNode(n.clone()))
+                    }
+                }
+                return Ok(Value::Function(params, body.as_ref().clone()))
+            }
+            Err(Error::UnexpectedNode(id.as_ref().clone()))
+        }
         Node::Assign { m, id, expr, pos } => {
             let value = get(expr.as_ref(), context, path)?;
             if let Node::Word { v, pos } = id.as_ref() {
@@ -125,7 +177,7 @@ pub fn get(node: &Node, context: &mut Context, path: &str) -> Result<Value, Erro
                     let res = context.set(v, &value);
                     if res.is_err() { return Err(Error::Immutable(v.clone())) }
                 } else {
-                    let res = context.def(v, &value);
+                    let res = context.set_const(v, &value);
                     if res.is_err() { return Err(Error::AlreadyDefined(v.clone())) }
                 }
                 return Ok(value)

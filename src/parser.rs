@@ -10,7 +10,8 @@ pub enum Node {
     Binary{ op: Token, left: Box<Node>, right: Box<Node>, pos: Position }, Unary{ op: Token, node: Box<Node>, pos: Position },
     Call{ v: Box<Node>, args: Vec<Node>, pos: Position }, Tuple{ nodes: Vec<Node>, pos: Position },
     Percent{ node: Box<Node>, pos: Position }, Abs{ node: Box<Node>, pos: Position },
-    Assign { m: bool, id: Box<Node>, expr: Box<Node>, pos: Position }
+    Assign { m: bool, id: Box<Node>, expr: Box<Node>, pos: Position },
+    Function { id: Box<Node>, body: Box<Node>, pos: Position },
 }
 impl Node {
     pub fn pos(&self) -> Position {
@@ -27,6 +28,7 @@ impl Node {
             Self::Percent { node: _, pos } => pos.clone(),
             Self::Abs { node: _, pos } => pos.clone(),
             Self::Assign { m: _, id: _, expr: _, pos } => pos.clone(),
+            Self::Function { id: _, body: _, pos } => pos.clone(),
         }
     }
 }
@@ -45,6 +47,7 @@ impl std::fmt::Display for Node {
             Self::Percent { node, pos: _ } => write!(f, "{node}%"),
             Self::Abs { node, pos: _ } => write!(f, "|{node}|"),
             Self::Assign { m, id, expr, pos } => if *m { write!(f, "{id} := {expr}") } else { write!(f, "{id} :: {expr}") }
+            Self::Function { id, body, pos } => write!(f, "{id} -> {body}"),
         }
     }
 }
@@ -120,12 +123,12 @@ impl Parser {
         Ok(node)
     }
     pub fn expr(&mut self) -> Result<Node, Error> {
-        let id = self.comp()?;
+        let id = self.func()?;
         if self.token() == Token::Assign || self.token() == Token::Def {
             let tok = self.token();
             if let Node::Word { v, pos } = &id {
                 self.advance();
-                let expr = self.expr()?;
+                let expr = self.func()?;
                 return Ok(Node::Assign{
                     m: tok == Token::Assign,
                     id: Box::new(id.clone()),
@@ -135,6 +138,19 @@ impl Parser {
             } else {
                 return Err(Error::UnexpectedToken(self.token()))
             }
+        }
+        Ok(id)
+    }
+    pub fn func(&mut self) -> Result<Node, Error> {
+        let id = self.comp()?;
+        if self.token() == Token::ArrowRight {
+            self.advance();
+            let node = self.expr()?;
+            return Ok(Node::Function {
+                id: Box::new(id.clone()),
+                body: Box::new(node.clone()),
+                pos: Position(self.path.clone(), id.pos().1.start..node.pos().1.end)
+            })
         }
         Ok(id)
     }

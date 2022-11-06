@@ -3,6 +3,7 @@ use std::ops::{Add, Sub, Mul, Div, Neg};
 use crate::lexer::Token;
 use crate::set::*;
 use crate::error::*;
+use crate::parser::*;
 
 #[derive(Clone, Debug)]
 pub enum Number { Int(i64), Float(f64) }
@@ -114,7 +115,7 @@ impl PartialOrd for Number {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Type { Number, Vector, Set, Tuple }
+pub enum Type { Number, Vector, Set, Tuple, Function }
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -122,12 +123,13 @@ impl std::fmt::Display for Type {
             Self::Vector => write!(f, "vector"),
             Self::Set => write!(f, "set"),
             Self::Tuple => write!(f, "tuple"),
+            Self::Function => write!(f, "function"),
         }
     }
 }
 
 #[derive(Clone, Debug)]
-pub enum Value { Number(Number), Vector(Vec<Self>), Set(Set<Self>), Tuple(Vec<Self>) }
+pub enum Value { Number(Number), Vector(Vec<Self>), Set(Set<Self>), Tuple(Vec<Self>), Function(Vec<String>, Node) }
 impl Value {
     pub fn typ(&self) -> Type {
         match self {
@@ -135,6 +137,7 @@ impl Value {
             Self::Vector(_) => Type::Vector,
             Self::Set(_) => Type::Set,
             Self::Tuple(_) => Type::Tuple,
+            Self::Function(_, _) => Type::Function,
         }
     }
     pub fn unop(&self, op: &Token) -> Option<Self> {
@@ -318,6 +321,7 @@ impl std::fmt::Display for Value {
             Self::Vector(v) => write!(f, "[{}]", v.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ")),
             Self::Set(v) => write!(f, "{{{}}}", v.values.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ")),
             Self::Tuple(v) => write!(f, "({})", v.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(", ")),
+            Self::Function(params, node) => write!(f, "function({})->{node}", params.join(", ")),
         }
     }
 }
