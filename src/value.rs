@@ -3,7 +3,8 @@ use std::ops::{Add, Sub, Mul, Div, Neg};
 use crate::lexer::Token;
 use crate::set::*;
 use crate::error::*;
-use crate::parser::*;
+use crate::parser::Node;
+use crate::interpreter::Context;
 
 #[derive(Clone, Debug)]
 pub enum Number { Int(i64), Float(f64) }
@@ -115,7 +116,7 @@ impl PartialOrd for Number {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Type { Number, Vector, Set, Tuple, Function }
+pub enum Type { Number, Vector, Set, Tuple, Function, ForeignFunction }
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -124,12 +125,16 @@ impl std::fmt::Display for Type {
             Self::Set => write!(f, "set"),
             Self::Tuple => write!(f, "tuple"),
             Self::Function => write!(f, "function"),
+            Self::ForeignFunction => write!(f, "foreign-function"),
         }
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum Value { Number(Number), Vector(Vec<Self>), Set(Set<Self>), Tuple(Vec<Self>), Function(Vec<String>, Node) }
+type ForeignFunction = fn(&mut Context) -> Result<Value, Error>;
+#[derive(Clone)]
+pub enum Value {
+    Number(Number), Vector(Vec<Self>), Set(Set<Self>), Tuple(Vec<Self>),
+    Function(Vec<String>, Node), ForeignFunction(Vec<String>, ForeignFunction) }
 impl Value {
     pub fn typ(&self) -> Type {
         match self {
@@ -138,6 +143,7 @@ impl Value {
             Self::Set(_) => Type::Set,
             Self::Tuple(_) => Type::Tuple,
             Self::Function(_, _) => Type::Function,
+            Self::ForeignFunction(_, _) => Type::ForeignFunction,
         }
     }
     pub fn unop(&self, op: &Token) -> Option<Self> {
@@ -322,6 +328,19 @@ impl std::fmt::Display for Value {
             Self::Set(v) => write!(f, "{{{}}}", v.values.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" ")),
             Self::Tuple(v) => write!(f, "({})", v.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(", ")),
             Self::Function(params, node) => write!(f, "function({})->{node}", params.join(", ")),
+            Self::ForeignFunction(params, _) => write!(f, "foreign-function({})", params.join(", ")),
+        }
+    }
+}
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Number(v) => write!(f, "Number({v:?})"),
+            Self::Vector(v) => write!(f, "Vector({v:?})"),
+            Self::Set(v) => write!(f, "Set({v:?})"),
+            Self::Tuple(v) => write!(f, "Tuple({v:?})"),
+            Self::Function(params, node) => write!(f, "Function({params:?}, {node:?})"),
+            Self::ForeignFunction(params, func) => write!(f, "ForeignFunction({params:?}, ...)"),
         }
     }
 }

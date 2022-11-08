@@ -20,7 +20,7 @@ pub fn run(text: &str, context: &mut Context, path: &str) -> Result<Option<Value
 }
 
 fn main() {
-    let mut context = Context::new();
+    let mut context = Context::new(); std_context(&mut context);
     loop {
         let mut input = String::new();
         print!("> ");
@@ -33,4 +33,59 @@ fn main() {
             if let Some(v) = res.unwrap() { println!("{v}"); }
         }
     }
+}
+
+pub fn _sqrt(context: &mut Context) -> Result<Value, Error> {
+    let value = context.get(&"x".to_string()).unwrap();
+    if let Value::Number(num) = value {
+        if let Number::Int(v) = num {
+            return Ok(Value::Number(Number::Float((*v as f64).sqrt())))
+        }
+        if let Number::Float(v) = num {
+            return Ok(Value::Number(Number::Float(v.sqrt())))
+        }
+    }
+    Err(Error::ExpectedType(Type::Number))
+}
+pub fn _floor(context: &mut Context) -> Result<Value, Error> {
+    let value = context.get(&"x".to_string()).unwrap();
+    if let Value::Number(num) = value {
+        if let Number::Int(v) = num {
+            return Ok(value.clone())
+        }
+        if let Number::Float(v) = num {
+            return Ok(Value::Number(Number::Float(v.floor())))
+        }
+    }
+    Err(Error::ExpectedType(Type::Number))
+}
+pub fn _ceil(context: &mut Context) -> Result<Value, Error> {
+    let value = context.get(&"x".to_string()).unwrap();
+    if let Value::Number(num) = value {
+        if let Number::Int(v) = num {
+            return Ok(value.clone())
+        }
+        if let Number::Float(v) = num {
+            return Ok(Value::Number(Number::Float(v.ceil())))
+        }
+    }
+    Err(Error::ExpectedType(Type::Number))
+}
+pub fn _round(context: &mut Context) -> Result<Value, Error> {
+    let value = context.get(&"x".to_string()).unwrap();
+    if let Value::Number(num) = value {
+        if let Number::Int(v) = num {
+            return Ok(value.clone())
+        }
+        if let Number::Float(v) = num {
+            return Ok(Value::Number(Number::Float(v.round())))
+        }
+    }
+    Err(Error::ExpectedType(Type::Number))
+}
+pub fn std_context(context: &mut Context) {
+    context.global_const(&"sqrt".to_string(), &Value::ForeignFunction(vec!["x".to_string()], _sqrt));
+    context.global_const(&"floor".to_string(), &Value::ForeignFunction(vec!["x".to_string()], _floor));
+    context.global_const(&"ceil".to_string(), &Value::ForeignFunction(vec!["x".to_string()], _ceil));
+    context.global_const(&"round".to_string(), &Value::ForeignFunction(vec!["x".to_string()], _round));
 }

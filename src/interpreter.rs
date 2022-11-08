@@ -8,32 +8,34 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Scope {
-    vars: HashMap<String, Value>
+    vars: HashMap<String, Value>,
+    consts: HashMap<String, Value>
 }
 impl Scope {
-    pub fn new() -> Self { Self { vars: HashMap::new() } }
+    pub fn new() -> Self { Self { vars: HashMap::new(), consts: HashMap::new() } }
     pub fn get(&self, id: &String) -> Option<&Value> {
-        self.vars.get(id)
+        self.vars.get(id).or_else(|| self.consts.get(id))
+    }
+    pub fn is_const(&self, id: &String) -> bool {
+        self.consts.get(id).is_some()
     }
     pub fn set(&mut self, id: &String, value: &Value) -> Option<Value> {
         self.vars.insert(id.clone(), value.clone())
+    }
+    pub fn set_const(&mut self, id: &String, value: &Value) -> Option<Value> {
+        self.consts.insert(id.clone(), value.clone())
     }
 }
 
 #[derive(Debug)]
 pub struct Context {
     scopes: Vec<Scope>,
-    consts: Vec<Scope>,
     global: Scope,
 }
 impl Context {
-    pub fn new() -> Self { Self { scopes: vec![Scope::new()], consts: vec![Scope::new()], global: Scope::new() } }
+    pub fn new() -> Self { Self { scopes: vec![Scope::new()], global: Scope::new() } }
     pub fn get(&self, id: &String) -> Option<&Value> {
         for scope in self.scopes.iter().rev() {
-            let v = scope.get(id);
-            if v.is_some() { return v }
-        }
-        for scope in self.consts.iter().rev() {
             let v = scope.get(id);
             if v.is_some() { return v }
         }
@@ -41,11 +43,9 @@ impl Context {
     }
     pub fn set(&mut self, id: &String, value: &Value) -> Result<(), ()> {
         if self.global.get(id).is_some() { return Err(()) }
-        for scope in self.consts.iter() {
-            if scope.get(id).is_some() { return Err(()) }
-        }
         for scope in self.scopes.iter_mut() {
             if scope.get(id).is_some() {
+                if scope.is_const(id) { return Err(()) }
                 let v = scope.set(id, value);
                 return Ok(())
             }
@@ -55,24 +55,26 @@ impl Context {
     }
     pub fn set_const(&mut self, id: &String, value: &Value) -> Result<(), ()> {
         if self.global.get(id).is_some() { return Err(()) }
-        for scope in self.consts.iter() {
-            if scope.get(id).is_some() { return Err(()) }
-        }
         for scope in self.scopes.iter() {
             if scope.get(id).is_some() { return Err(()) }
         }
-        self.consts.last_mut().unwrap().set(id, value);
+        self.scopes.last_mut().unwrap().set_const(id, value);
         Ok(())
     }
     pub fn global(&mut self, id: &String, value: &Value) -> Result<(), ()> {
         if self.global.get(id).is_some() { return Err(()) }
-        for scope in self.consts.iter() {
-            if scope.get(id).is_some() { return Err(()) }
-        }
         for scope in self.scopes.iter() {
             if scope.get(id).is_some() { return Err(()) }
         }
         self.global.set(id, value);
+        Ok(())
+    }
+    pub fn global_const(&mut self, id: &String, value: &Value) -> Result<(), ()> {
+        if self.global.get(id).is_some() { return Err(()) }
+        for scope in self.scopes.iter() {
+            if scope.get(id).is_some() { return Err(()) }
+        }
+        self.global.set_const(id, value);
         Ok(())
     }
 }
@@ -143,6 +145,19 @@ pub fn get(node: &Node, context: &mut Context, path: &str) -> Result<Value, Erro
                     }
                 }
                 return get(&body, &mut fcontext, path)
+            }
+            if let Value::ForeignFunction(params, function) = func {
+                let global = context.global.clone();
+                let mut fcontext = Context::new(); fcontext.global = global;
+                for i in 0..params.len() {
+                    if let Some(n) = args.get(i) {
+                        let value = get(n, context, path)?;
+                        fcontext.set(&params[i], &value);
+                    } else {
+                        return Err(Error::TooFewArgs(params.len(), args.len()))
+                    }
+                }
+                return function(&mut fcontext)
             }
             Err(Error::ExpectedType(Type::Function))
         }
