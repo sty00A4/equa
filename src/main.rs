@@ -29,9 +29,9 @@ fn main() {
         let res = run(input.as_str(), &mut context, "stdin");
         if let Err(e) = res {
             println!("{e}");
-        } else {
-            if let Some(v) = res.unwrap() { println!("{v}"); }
+            continue
         }
+        if let Some(v) = res.unwrap() { println!("{v}"); }
     }
 }
 
