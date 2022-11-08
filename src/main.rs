@@ -274,4 +274,6 @@ pub fn std_context(context: &mut Context) {
     context.global_const(&"PI".to_string(), &Value::Number(Number::Float(std::f64::consts::PI)));
     context.global_const(&"TAU".to_string(), &Value::Number(Number::Float(std::f64::consts::TAU)));
     context.global_const(&"E".to_string(), &Value::Number(Number::Float(std::f64::consts::E)));
+    context.global_const(&"inf".to_string(), &Value::Number(Number::Float(std::f64::INFINITY)));
+    context.global_const(&"NaN".to_string(), &Value::Number(Number::Float(std::f64::NAN)));
 }
