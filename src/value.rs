@@ -8,6 +8,16 @@ use crate::interpreter::Context;
 
 #[derive(Clone, Debug)]
 pub enum Number { Int(i64), Float(f64) }
+impl Number {
+    pub fn pow(&self, other: &Self) -> Self {
+        match (self, other) {
+            (Number::Int(v1), Number::Int(v2)) => Number::Float((*v1 as f64).powi(*v2 as i32)),
+            (Number::Float(v1), Number::Float(v2)) => Number::Float(v1.powf(*v2)),
+            (Number::Int(v1), Number::Float(v2)) => Number::Float((*v1 as f64).powf(*v2)),
+            (Number::Float(v1), Number::Int(v2)) => Number::Float(v1.powi(*v2 as i32)),
+        }
+    }
+}
 impl std::fmt::Display for Number {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -189,6 +199,7 @@ impl Value {
                 Token::PlusMinus => Some(Self::Tuple(vec![Self::Number(v1.to_owned() + v2.to_owned()), Self::Number(v1.to_owned() - v2.to_owned())])),
                 Token::Star => Some(Self::Number(v1.to_owned() * v2.to_owned())),
                 Token::Slash => Some(Self::Number(v1.to_owned() / v2.to_owned())),
+                Token::Exponent => Some(Self::Number(v1.pow(v2))),
                 Token::Equal => Some(Self::Number(Number::Int((v1.to_owned() == v2.to_owned()) as i64))),
                 Token::NotEqual => Some(Self::Number(Number::Int((v1.to_owned() != v2.to_owned()) as i64))),
                 Token::Less => Some(Self::Number(Number::Int((v1.to_owned() < v2.to_owned()) as i64))),
