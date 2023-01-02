@@ -25,7 +25,7 @@ But to make it more useful, there are more symbols:
 
 `x % y` - **Modulo**: modulo `y` of `x`
 
-`x :: y` - **Immutable assignment**: assigns `y` to `x` whhich cannpt be changed
+`x :: y` - **Immutable assignment**: assigns `y` to `x` which cannpt be changed
 
 `x := y` - **Mutable assignment**: assigns `y` to `x` which can be changed
 
