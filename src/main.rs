@@ -45,7 +45,7 @@ pub fn _sqrt(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.sqrt())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _floor(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -57,7 +57,7 @@ pub fn _floor(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.floor())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _ceil(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -69,7 +69,7 @@ pub fn _ceil(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.ceil())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _round(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -81,7 +81,7 @@ pub fn _round(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.round())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _abs(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -93,7 +93,7 @@ pub fn _abs(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.abs())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _sin(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -105,7 +105,7 @@ pub fn _sin(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.sin())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _cos(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -117,7 +117,7 @@ pub fn _cos(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.cos())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _tan(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -129,7 +129,7 @@ pub fn _tan(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.tan())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _asin(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -141,7 +141,7 @@ pub fn _asin(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.asin())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _acos(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -153,7 +153,7 @@ pub fn _acos(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.acos())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _atan(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -165,7 +165,7 @@ pub fn _atan(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.atan())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _atan2(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -178,7 +178,7 @@ pub fn _atan2(context: &mut Context) -> Result<Value, Error> {
             (Number::Float(v1), Number::Int(v2)) => return Ok(Value::Number(Number::Float(v1.atan2((*v2 as f64))))),
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _sinh(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -190,7 +190,7 @@ pub fn _sinh(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.sinh())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _cosh(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -202,7 +202,7 @@ pub fn _cosh(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.cosh())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _tanh(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -214,7 +214,7 @@ pub fn _tanh(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.tanh())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _asinh(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -226,7 +226,7 @@ pub fn _asinh(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.asinh())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _acosh(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -238,7 +238,7 @@ pub fn _acosh(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.acosh())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn _atanh(context: &mut Context) -> Result<Value, Error> {
     let value = context.get(&"x".to_string()).unwrap();
@@ -250,7 +250,7 @@ pub fn _atanh(context: &mut Context) -> Result<Value, Error> {
             return Ok(Value::Number(Number::Float(v.atanh())))
         }
     }
-    Err(Error::ExpectedType(Type::Number))
+    Err(Error::ExpectedType(value.typ(), Type::Number))
 }
 pub fn std_context(context: &mut Context) {
     context.global_const(&"sqrt".to_string(), &Value::ForeignFunction(vec!["x".to_string()], _sqrt));

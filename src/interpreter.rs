@@ -88,14 +88,14 @@ pub fn get(node: &Node, context: &mut Context, path: &str) -> Result<Value, Erro
             if let Value::Number(v) = value {
                 return Ok(Value::Number(v / Number::Int(100)))
             }
-            Err(Error::ExpectedType(value.typ()))
+            Err(Error::ExpectedType(Type::Number, value.typ()))
         }
         Node::Abs { node, pos } => {
             let value = get(node, context, path)?;
             if let Value::Number(v) = value {
                 return Ok(Value::Number(if v < Number::Int(0) { -v } else { v }))
             }
-            Err(Error::ExpectedType(value.typ()))
+            Err(Error::ExpectedTypes(vec![Type::Number, Type::Set], value.typ()))
         }
         Node::Word { v, pos } => {
             let value = context.get(v);
@@ -159,7 +159,7 @@ pub fn get(node: &Node, context: &mut Context, path: &str) -> Result<Value, Erro
                 }
                 return function(&mut fcontext)
             }
-            Err(Error::ExpectedType(Type::Function))
+            Err(Error::ExpectedType(Type::Function, func.typ()))
         }
         Node::Tuple { nodes, pos } => {
             let mut values: Vec<Value> = vec![];
